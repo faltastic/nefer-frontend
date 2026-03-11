@@ -16,3 +16,9 @@ The frontend for the Nefer creative professional networking platform. Built with
    ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Features (MVP)
+- **AI Profile Generation:** Automatically builds professional profiles by scraping portfolio URLs via a Python FastAPI backend.
+- **Waitlist System:** Gated signup flow requiring an invite code (e.g., `NEFER2026`). Uninvited users are placed on a waitlist.
+- **Supabase Integration:** Real-time data storage, PostgreSQL triggers, and secure authentication.
+- **Modern UI:** Built with Shadcn UI, Tailwind CSS, and Phosphor Icons for a clean, professional aesthetic.

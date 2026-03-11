@@ -1,35 +1,41 @@
+'use client';
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { ArrowSquareOut, MapPin, Camera, User, House, Heart, BookmarkSimple } from "@phosphor-icons/react/dist/ssr";
+import { ArrowSquareOut, Camera, User, House } from "@phosphor-icons/react/dist/ssr";
+import { Tables } from "@/types/database";
+import { InteractionButtons } from "@/components/InteractionButtons";
+import { useUser } from "@/lib/auth";
 
-export interface ProfileData {
-  url: string;
-  name: string;
-  profile_type: string;
-  short_description: string;
-  long_description: string;
-  image_urls: string[];
-  keywords: string[];
-}
+type ProfileRow = Tables<'profiles'>;
 
 interface ProfileCardProps {
-  profile: ProfileData;
+  profile: ProfileRow;
+  initialLiked?: boolean;
+  initialBookmarked?: boolean;
 }
 
-export function ProfileCard({ profile }: ProfileCardProps) {
+export function ProfileCard({ profile, initialLiked = false, initialBookmarked = false }: ProfileCardProps) {
+  // Safe parsing of JSON fields from Supabase
+  const image_urls = (profile.image_urls as string[]) || [];
+  const keywords = (profile.keywords as string[]) || [];
+  
   // Use the first image as main, others as thumbnails
-  const mainImage = profile.image_urls[0];
-  const thumbnails = profile.image_urls.slice(1, 5);
+  const mainImage = image_urls[0];
+  const thumbnails = image_urls.slice(1, 5);
+
+  const { user } = useUser();
+  const isAuthenticated = !!user;
 
   return (
-    <Card className="w-full max-w-lg border-zinc-800 bg-zinc-900/50 backdrop-blur-sm overflow-hidden group shadow-2xl">
+    <Card className="w-full max-w-lg border-zinc-800 bg-zinc-900/50 backdrop-blur-sm overflow-hidden group shadow-2xl flex flex-col h-full">
       {/* Image Section */}
-      <div className="relative">
+      <Link href={`/${profile.slug}`} className="block relative">
         <div className="h-[340px] w-full overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
-            src={mainImage} 
+            src={mainImage || "https://images.unsplash.com/photo-1554080353-a576cf803bda?auto=format&fit=crop&q=80&w=1000"} 
             alt={profile.name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
@@ -44,15 +50,15 @@ export function ProfileCard({ profile }: ProfileCardProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="absolute bottom-4 left-4 flex gap-2 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-           <button className="p-2.5 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-emerald-600 transition-colors">
-              <Heart size={20} weight="bold" />
-           </button>
-           <button className="p-2.5 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-emerald-600 transition-colors">
-              <BookmarkSimple size={20} weight="bold" />
-           </button>
+        <div className="absolute bottom-4 left-4 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+          <InteractionButtons 
+            profileId={profile.id} 
+            initialLiked={initialLiked} 
+            initialBookmarked={initialBookmarked}
+            isAuthenticated={isAuthenticated}
+          />
         </div>
-      </div>
+      </Link>
 
       {/* Thumbnails Row */}
       {thumbnails.length > 0 && (
@@ -70,40 +76,46 @@ export function ProfileCard({ profile }: ProfileCardProps) {
         </div>
       )}
 
-      <CardContent className="p-6 space-y-5">
+      <CardContent className="p-6 space-y-5 flex-1 flex flex-col">
         <div className="flex justify-between items-start gap-4">
           <div className="space-y-1">
-            <h2 className="text-2xl font-extrabold text-zinc-50 tracking-tight leading-none flex items-center gap-2">
-              {profile.name}
-            </h2>
-            <div className="flex items-center gap-1 text-zinc-500 text-sm font-medium">
-              <House size={14} />
-              <Link href={profile.url} target="_blank" className="hover:text-emerald-500 underline-offset-4 hover:underline decoration-emerald-500/30">
-                {new URL(profile.url).hostname}
-              </Link>
-            </div>
+            <Link href={`/${profile.slug}`}>
+              <h2 className="text-2xl font-extrabold text-zinc-50 tracking-tight leading-none hover:text-emerald-400 transition-colors">
+                {profile.name}
+              </h2>
+            </Link>
+            {profile.source_url && (
+              <div className="flex items-center gap-1 text-zinc-500 text-sm font-medium">
+                <House size={14} />
+                <Link href={profile.source_url} target="_blank" className="hover:text-emerald-500 underline-offset-4 hover:underline decoration-emerald-500/30">
+                  {new URL(profile.source_url).hostname}
+                </Link>
+              </div>
+            )}
           </div>
           
-          <Link 
-            href={profile.url} 
-            target="_blank" 
-            className="p-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-emerald-600 hover:text-white transition-all shadow-inner"
-          >
-            <ArrowSquareOut size={20} weight="bold" />
-          </Link>
+          {profile.source_url && (
+            <Link 
+              href={profile.source_url} 
+              target="_blank" 
+              className="p-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-emerald-600 hover:text-white transition-all shadow-inner"
+            >
+              <ArrowSquareOut size={20} weight="bold" />
+            </Link>
+          )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 flex-1">
           <p className="text-zinc-200 font-bold leading-snug">
             {profile.short_description}
           </p>
-          <p className="text-zinc-400 text-sm leading-relaxed line-clamp-2 font-medium">
+          <p className="text-zinc-400 text-sm leading-relaxed line-clamp-3 font-medium">
             {profile.long_description}
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-1.5 pt-2">
-          {profile.keywords.map((keyword, index) => (
+        <div className="flex flex-wrap gap-1.5 pt-2 mt-auto">
+          {keywords.slice(0, 5).map((keyword, index) => (
             <Badge 
               key={index} 
               variant="outline" 

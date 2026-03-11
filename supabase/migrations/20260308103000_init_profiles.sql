@@ -10,7 +10,7 @@ CREATE TABLE public.profiles (
   long_description TEXT,
   image_urls JSONB DEFAULT '[]'::jsonb NOT NULL,
   keywords JSONB DEFAULT '[]'::jsonb NOT NULL,
-  is_public BOOLEAN DEFAULT true NOT NULL,
+  is_confirmed BOOLEAN DEFAULT false NOT NULL,
   source_url TEXT
 );
 
@@ -42,7 +42,7 @@ ALTER TABLE public.likes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookmarks ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Public profiles are viewable by everyone" 
-ON public.profiles FOR SELECT USING (is_public = true);
+ON public.profiles FOR SELECT USING (is_confirmed = true);
 
 CREATE POLICY "Users can insert their own profile" 
 ON public.profiles FOR INSERT WITH CHECK (auth.uid() = user_id);

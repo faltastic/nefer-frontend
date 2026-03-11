@@ -77,7 +77,7 @@ export type Database = {
           created_at: string
           id: string
           image_urls: Json
-          is_public: boolean
+          is_confirmed: boolean
           keywords: Json
           long_description: string | null
           name: string
@@ -92,7 +92,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_urls?: Json
-          is_public?: boolean
+          is_confirmed?: boolean
           keywords?: Json
           long_description?: string | null
           name: string
@@ -107,7 +107,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_urls?: Json
-          is_public?: boolean
+          is_confirmed?: boolean
           keywords?: Json
           long_description?: string | null
           name?: string

@@ -1,50 +1,152 @@
-import { ProfileCard, ProfileData } from "@/components/ProfileCard";
+import { createClient } from "@/lib/supabase/server";
+import { ProfileCard } from "@/components/ProfileCard";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { getUser } from "@/lib/supabase/server-auth";
 
-const mockProfile: ProfileData = {
-  url: "https://thelouqii.com/",
-  name: "Thelouqii",
-  profile_type: "Fashion Brand",
-  short_description:
-    "Thelouqii is a fashion brand specializing in unique bohemian and elegant apparel, featuring a range of kaftans, kimonos, and versatile sets.",
-  long_description:
-    "Thelouqii offers a distinctive collection of clothing inspired by bohemian and nomadic aesthetics. Their range includes luxurious kaftans, stylish kimonos, vests, tops, dresses, and pants, all crafted to embody an elegant yet free-spirited style. With items like the 'Gypsy fur kimono' and 'Desert kaftan', Thelouqii provides chic and comfortable fashion for those who appreciate unique designs and global influences.",
-  image_urls: [
-    "https://thelouqii.com/cdn/shop/files/DSC_4251-2.jpg?v=1752582644width=1946",
-    "https://thelouqii.com/cdn/shop/files/80F16B40-E9F1-4AEA-9F5F-C7A4B16ED3A3.jpg?v=1769384805&width=1946",
-    "https://thelouqii.com/cdn/shop/files/6ED080E4-8A9C-4347-B791-B329AEF82C6B.jpg?v=1769384805&width=1946",
-    "https://thelouqii.com/cdn/shop/files/preview_images/35847aefdcff4bb7a35800a023fa1b54.thumbnail.0000000000.jpg?v=1769526111&width=1946",
-    "https://thelouqii.com/cdn/shop/files/685F9670-E8F0-4F59-8D3C-884EA4F226CF.jpg?v=1769384805&width=1946",
-    "https://thelouqii.com/cdn/shop/files/EA2A3E38-B09D-4F60-A4F5-E0314F59D101.jpg?v=1769384805&width=1946",
-    "https://thelouqii.com/cdn/shop/files/94606BF8-C11A-4AD9-8031-87114F728C0C.jpg?v=1769384805&width=1946",
-    "https://thelouqii.com/cdn/shop/files/303F659A-AF00-4FE5-8E36-E8EEA5A5DDDC.jpg?v=1769384390&width=1946",
-  ],
-  keywords: [
-    "#BohemianFashion",
-    "#Kaftans",
-    "#Kimonos",
-    "#EthnicChic",
-    "#NomadStyle",
-    "#LuxuryApparel",
-  ],
-};
+export default async function HomePage() {
+  const supabase = await createClient();
+  const user = await getUser();
 
-export default function Home() {
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("is_confirmed", true)
+    .order("created_at", { ascending: false })
+    .limit(24);
+
+  let likedProfileIds = new Set<string>();
+  let bookmarkedProfileIds = new Set<string>();
+
+  if (user) {
+    const { data: likes } = await supabase
+      .from("likes")
+      .select("profile_id")
+      .eq("user_id", user.id);
+
+    const { data: bookmarks } = await supabase
+      .from("bookmarks")
+      .select("profile_id")
+      .eq("user_id", user.id);
+
+    if (likes) {
+      likedProfileIds = new Set(likes.map((like) => like.profile_id));
+    }
+    if (bookmarks) {
+      bookmarkedProfileIds = new Set(
+        bookmarks.map((bookmark) => bookmark.profile_id),
+      );
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-zinc-950 p-6 md:p-12 lg:p-24 overflow-x-hidden">
-      <main className="max-w-6xl mx-auto flex flex-col items-center gap-16">
-        <div className="text-center space-y-6 max-w-2xl">
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tighter text-zinc-50">
-            Featured Creatives
+    <div className="flex flex-col min-h-screen">
+      {/* Hero Section */}
+      <section className="py-20 px-4 text-center bg-gradient-to-b from-emerald-950/20 to-background">
+        <div className="container mx-auto max-w-4xl">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6">
+            Connect with the world's{" "}
+            <span className="text-emerald-500">top creatives</span>
           </h1>
-          <p className="text-lg md:text-xl text-zinc-400 font-medium">
-            Explore unique visual narratives from around the world. Every card tells a story of culture, art, and vision.
+          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+            The next-generation platform for photographers, models, and brands
+            to find their next collaboration.
           </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link href="/join">
+              <Button size="lg" className="rounded-full px-8 text-lg font-bold">
+                Get Started
+              </Button>
+            </Link>
+            <Link href="/join">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full px-8 text-lg font-bold"
+              >
+                Browse Professionals
+              </Button>
+            </Link>
+          </div>
         </div>
-        
-        <div className="w-full flex justify-center items-start gap-8 flex-wrap">
-           <ProfileCard profile={mockProfile} />
+      </section>
+
+      {/* Featured Profiles Grid */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto">
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">
+                Featured Professionals
+              </h2>
+              <p className="text-muted-foreground mt-2">
+                Discover talented creators joining the Nefer community.
+              </p>
+            </div>
+            <Link
+              href="/join"
+              className="text-emerald-500 font-bold hover:underline"
+            >
+              View all
+            </Link>
+          </div>
+
+          {!profiles || profiles.length === 0 ? (
+            <div className="text-center py-20 bg-muted/30 rounded-3xl border-2 border-dashed border-zinc-800">
+              <h3 className="text-xl font-semibold mb-2">No profiles yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Be the first professional to join Nefer!
+              </p>
+              <Link href="/join">
+                <Button>Create Profile</Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {profiles.map((profile) => (
+                <ProfileCard
+                  key={profile.id}
+                  profile={profile}
+                  initialLiked={likedProfileIds.has(profile.id)}
+                  initialBookmarked={bookmarkedProfileIds.has(profile.id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      </main>
+      </section>
+
+      {/* Footer-like CTA */}
+      <section className="py-24 px-4 bg-emerald-950/10 border-t border-zinc-900 mt-auto">
+        <div className="container mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-6">
+            Ready to showcase your portfolio?
+          </h2>
+          <p className="text-muted-foreground mb-10 max-w-xl mx-auto">
+            Our AI analyzes your existing work to build a professional Nefer
+            profile in seconds.
+          </p>
+          {user ? (
+            <Link href="/account">
+              <Button
+                size="lg"
+                className="rounded-full px-12 h-14 text-lg font-bold"
+              >
+                Go to Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/join">
+              <Button
+                size="lg"
+                className="rounded-full px-12 h-14 text-lg font-bold"
+              >
+                Join Nefer Today
+              </Button>
+            </Link>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
