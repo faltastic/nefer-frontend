@@ -3,6 +3,7 @@ import { ProfileCard } from "@/components/ProfileCard";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getUser } from "@/lib/supabase/server-auth";
+import { SearchBar } from "@/components/SearchBar";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -74,6 +75,9 @@ export default async function HomePage() {
       {/* Featured Profiles Grid */}
       <section className="py-16 px-4">
         <div className="container mx-auto">
+          {/* Mobile Search Bar */}
+          <SearchBar variant="mobile" className="md:hidden mb-10" />
+
           <div className="flex justify-between items-end mb-12">
             <div>
               <h2 className="text-3xl font-bold tracking-tight">
@@ -139,7 +143,7 @@ export default async function HomePage() {
             <Link href="/join">
               <Button
                 size="lg"
-                className="rounded-full px-12 h-14 text-lg font-bold"
+                className="rounded-full px-12 h-14 text-lg font-bold bg-fuchsia-600"
               >
                 Join Nefer Today
               </Button>
